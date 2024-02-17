@@ -1,4 +1,10 @@
-{ lib, buildGoModule, fetchFromGitHub }:
+{ lib
+, openssl
+, makeWrapper
+, buildGoModule
+, fetchFromGitHub
+, withFederationSupport ? true
+}:
 
 buildGoModule rec {
   pname = "writefreely";
@@ -16,6 +22,12 @@ buildGoModule rec {
   patches = [
     ./fix-go-version-error.patch
   ];
+
+  nativeBuildInputs = lib.optional withFederationSupport makeWrapper;
+
+  postFixup = lib.optionals withFederationSupport ''
+    wrapProgram $out/bin/writefreely --prefix PATH : ${lib.makeBinPath [ openssl ]}
+  '';
 
   ldflags = [ "-s" "-w" "-X github.com/writefreely/writefreely.softwareVer=${version}" ];
 
